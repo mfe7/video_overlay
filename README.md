@@ -19,4 +19,13 @@ Clone the repo, `catkin_make`
 rosrun video_overlay video_overlay_node
 ```
 
+If you don't have your homography matrix already, you should:
+- find a recognizable moment in your video & take a screenshot
+- find the corresponding vicon coordinates during that moment (from the bag)
+- Click on the corresponding vehicle positions in the screenshot, using:
+```
+rosrun video_overlay video_overlay_node <screenshot_filename>
+```
+- Add the vicon and img coords to the list of pts used to compute H
+
 Contact: mfe@mit.edu

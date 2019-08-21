@@ -21,7 +21,7 @@ vector<Point2f> vicon_starting_pts;
 vector<Point2f> vicon_starting_img_pts;
 Mat imageCamera;
 
-double x_min = -8; double x_max = 2; double y_min = -3; double y_max = 3; double resolution = 0.01;
+double x_min = -8; double x_max = 2; double y_min = -4; double y_max = 4; double resolution = 0.01;
 Mat traj_img(int((y_max - y_min)/resolution), int((x_max - x_min)/resolution), CV_8UC3, Scalar(0,0,0));
 
 // // Function to add main image and transformed logo image and show final output.
@@ -144,6 +144,14 @@ Mat traj_img(int((y_max - y_min)/resolution), int((x_max - x_min)/resolution), C
 //     }
 // }
 
+void unlimited_mouse_click( int e, int x, int y, int d, void *ptr )
+{
+    if (e == EVENT_LBUTTONDOWN )
+    {
+        cout << x << " "<< y <<endl;
+    }
+}
+
 Point2f vicon_coord_to_top_down_img_plane_coord(Point2f vicon_pt){
     return Point((vicon_pt.x - x_min)/resolution, (y_max - vicon_pt.y)/resolution);
 }
@@ -158,7 +166,7 @@ int closest_ind(vector<double> v, double refElem){
 int main( int argc, char** argv )
 {
 
-    bool write_video = false;
+    bool write_video = true;
     vector<string> veh_names = {"HX04", "HX05", "HX06", "HX07"};
     double time_btwn_traj_pts = 0.2;
     double max_time_of_traj = 100;
@@ -167,20 +175,55 @@ int main( int argc, char** argv )
     string input_video_filename = "/home/mfe/Videos/first_day_cadrl_hexes/four_hexes_small.mp4";
     string output_video_filename = "outcpp.avi";
 
+    bool click_pts_for_homography = false;
+
+    if (click_pts_for_homography){
+        if( argc != 2)
+        {
+            cout << "Usage Error: Need to supply static image for clicking pts." << endl;
+            return -1;
+        }
+        imageCamera = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+        namedWindow( "Display window", WINDOW_AUTOSIZE );// Create a window for display.
+        imshow( "Display window", imageCamera );
+        setMouseCallback("Display window", unlimited_mouse_click, NULL );
+        //  Press "Escape button" to exit
+        while(1)
+        {
+            int key=cvWaitKey(10);
+            if(key==27) break;
+        }
+        return 0;
+    }
+
+    Mat H;
     if (not have_homography_matrix){
         // Get homography matrix
-        vicon_starting_pts.push_back(Point2f(float(-6.7),float(-1.6))); // HX04
-        vicon_starting_pts.push_back(Point2f(float(-0.97),float(1.47))); // HX05
-        vicon_starting_pts.push_back(Point2f(float(-7),float(1.5))); // HX06
-        vicon_starting_pts.push_back(Point2f(float(-0.96),float(-1.5))); // HX07
+
+        // 4 hexes at their "parallel swap" start positions
+        vicon_starting_pts.push_back(Point2f(-6.7,-1.6)); // HX04
+        vicon_starting_pts.push_back(Point2f(-0.97,1.47)); // HX05
+        vicon_starting_pts.push_back(Point2f(-7,1.5)); // HX06
+        vicon_starting_pts.push_back(Point2f(-0.96,-1.5)); // HX07
         camera_starting_pts.push_back(Point2f(251, 528));
         camera_starting_pts.push_back(Point2f(1578, 431));
         camera_starting_pts.push_back(Point2f(543, 260));
         camera_starting_pts.push_back(Point2f(1463, 818));
+
+        // 4 hexes at their "initial hover" positions
+        vicon_starting_pts.push_back(Point2f(-1.93, -2.83));
+        vicon_starting_pts.push_back(Point2f(-4.02,-2.67));
+        vicon_starting_pts.push_back(Point2f(-5.95,-2.62));
+        vicon_starting_pts.push_back(Point2f(-7.96,-2.58));
+        camera_starting_pts.push_back(Point2f(1137, 992));
+        camera_starting_pts.push_back(Point2f(637, 826));
+        camera_starting_pts.push_back(Point2f(269, 699));
+        camera_starting_pts.push_back(Point2f(18, 602));
+
         for (int i=0; i<vicon_starting_pts.size(); i++){
             vicon_starting_img_pts.push_back(vicon_coord_to_top_down_img_plane_coord(vicon_starting_pts[i]));
         }
-        Mat H = findHomography(  vicon_starting_img_pts, camera_starting_pts, 0 );
+        H = findHomography(  vicon_starting_img_pts, camera_starting_pts, 0 );
 
     }
     
@@ -255,10 +298,13 @@ int main( int argc, char** argv )
         return -1;
     }
 
-    // Default resolution of the frame is obtained.The default resolution is system dependent. 
-    int frame_width = cap.get(CV_CAP_PROP_FRAME_WIDTH); 
-    int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT); 
-    VideoWriter video(output_video_filename, CV_FOURCC('M','J','P','G'), 10, Size(frame_width,frame_height)); 
+    VideoWriter video;
+    if (write_video){
+        // Default resolution of the frame is obtained.The default resolution is system dependent. 
+        int frame_width = cap.get(CV_CAP_PROP_FRAME_WIDTH); 
+        int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT); 
+        video = VideoWriter(output_video_filename, CV_FOURCC('M','J','P','G'), 10, Size(frame_width,frame_height)); 
+    }
     
     while(1){
         Mat frame;
@@ -304,7 +350,8 @@ int main( int argc, char** argv )
         // Display the resulting frame
         imshow( "Frame", finalImage );
 
-        video.write(finalImage);
+        if (write_video)
+            video.write(finalImage);
 
         // Press  ESC on keyboard to exit
         char c=(char)waitKey(25);
