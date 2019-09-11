@@ -8,6 +8,7 @@
 using namespace cv;
 using namespace std;
 
+#include "ros/ros.h"
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <std_msgs/Int32.h>
@@ -161,21 +162,43 @@ int closest_ind(vector<double> v, double refElem){
     return lower - v.begin();
 }
 
-
-
 int main( int argc, char** argv )
 {
+    ros::init(argc, argv, "video_overlay_node");
+    ros::NodeHandle nh("~");
 
-    bool write_video = true;
-    vector<string> veh_names = {"HX04", "HX05", "HX06", "HX07"};
-    double time_btwn_traj_pts = 0.2;
-    double max_time_of_traj = 100;
-    bool have_homography_matrix = false;
-    string bag_filename = "/home/mfe/ijrr_cadrl_results/four_hexes_swap_and_square.bag";
-    string input_video_filename = "/home/mfe/Videos/first_day_cadrl_hexes/four_hexes_small.mp4";
-    string output_video_filename = "outcpp.avi";
+    bool write_video;
+    bool have_homography_matrix;
+    vector<string> veh_names;
+    string output_video_filename;
+    string bag_filename;
+    string input_video_filename;
+    double video_start_time;
+    double video_end_time;
+    double traj_time_length;
+    double video_ahead_of_rosbag;
+    double time_btwn_veh_and_latest_traj;
+    double time_btwn_traj_pts;
+    double max_time_of_traj;
+    bool click_pts_for_homography;
+    double circle_radius, circle_thickness;
 
-    bool click_pts_for_homography = false;
+    nh.getParam("veh_names", veh_names);
+    nh.getParam("output_video_filename", output_video_filename);
+    nh.getParam("bag_filename", bag_filename);
+    nh.getParam("input_video_filename", input_video_filename);
+    nh.getParam("video_start_time", video_start_time);
+    nh.getParam("video_end_time", video_end_time);
+    nh.getParam("traj_time_length", traj_time_length);
+    nh.getParam("video_ahead_of_rosbag", video_ahead_of_rosbag);
+    nh.getParam("time_btwn_veh_and_latest_traj", time_btwn_veh_and_latest_traj);
+    nh.getParam("time_btwn_traj_pts", time_btwn_traj_pts);
+    nh.getParam("max_time_of_traj", max_time_of_traj);
+    nh.getParam("write_video", write_video);
+    nh.getParam("have_homography_matrix", have_homography_matrix);
+    nh.getParam("click_pts_for_homography", click_pts_for_homography);
+    nh.getParam("circle_radius", circle_radius);
+    nh.getParam("circle_thickness", circle_thickness);
 
     if (click_pts_for_homography){
         if( argc != 2)
@@ -198,27 +221,21 @@ int main( int argc, char** argv )
 
     Mat H;
     if (not have_homography_matrix){
-        // Get homography matrix
+        // Get homography matrix from yaml file
 
-        // 4 hexes at their "parallel swap" start positions
-        vicon_starting_pts.push_back(Point2f(-6.7,-1.6)); // HX04
-        vicon_starting_pts.push_back(Point2f(-0.97,1.47)); // HX05
-        vicon_starting_pts.push_back(Point2f(-7,1.5)); // HX06
-        vicon_starting_pts.push_back(Point2f(-0.96,-1.5)); // HX07
-        camera_starting_pts.push_back(Point2f(251, 528));
-        camera_starting_pts.push_back(Point2f(1578, 431));
-        camera_starting_pts.push_back(Point2f(543, 260));
-        camera_starting_pts.push_back(Point2f(1463, 818));
+        XmlRpc::XmlRpcValue vicon_camera_pairs;
+        XmlRpc::XmlRpcValue vicon_camera_pair;
+        nh.getParam("vicon_camera_pairs", vicon_camera_pairs);
 
-        // 4 hexes at their "initial hover" positions
-        vicon_starting_pts.push_back(Point2f(-1.93, -2.83));
-        vicon_starting_pts.push_back(Point2f(-4.02,-2.67));
-        vicon_starting_pts.push_back(Point2f(-5.95,-2.62));
-        vicon_starting_pts.push_back(Point2f(-7.96,-2.58));
-        camera_starting_pts.push_back(Point2f(1137, 992));
-        camera_starting_pts.push_back(Point2f(637, 826));
-        camera_starting_pts.push_back(Point2f(269, 699));
-        camera_starting_pts.push_back(Point2f(18, 602));
+        for (int32_t i = 0; i < vicon_camera_pairs.size(); ++i) 
+        {
+          double vicon_x = vicon_camera_pairs[i][0][0];
+          double vicon_y = vicon_camera_pairs[i][0][1];
+          int camera_x = vicon_camera_pairs[i][1][0];
+          int camera_y = vicon_camera_pairs[i][1][1];
+          vicon_starting_pts.push_back(Point2f(vicon_x, vicon_y));
+          camera_starting_pts.push_back(Point2f(camera_x, camera_y));
+        }
 
         for (int i=0; i<vicon_starting_pts.size(); i++){
             vicon_starting_img_pts.push_back(vicon_coord_to_top_down_img_plane_coord(vicon_starting_pts[i]));
@@ -263,6 +280,12 @@ int main( int argc, char** argv )
                 }
                 if ((timestamp - last_used_timestep < time_btwn_traj_pts) && (first_timestamp != timestamp)){
                     continue;
+                }
+                if (timestamp - first_timestamp - video_ahead_of_rosbag < video_start_time){
+                    continue;
+                }
+                if (timestamp - first_timestamp - video_ahead_of_rosbag > video_end_time){
+                    break;
                 }
 
                 last_used_timestep = timestamp;
@@ -315,23 +338,23 @@ int main( int argc, char** argv )
         if (frame.empty())
           break;
 
-        double traj_time_length = 20;
-        double video_ahead_of_rosbag = 9;
-        double time_btwn_veh_and_latest_traj = 0;
+        if (cap.get(CAP_PROP_POS_MSEC)/1000. < video_start_time){
+            continue;
+        }
+        if (cap.get(CAP_PROP_POS_MSEC)/1000. > video_end_time){
+            break;
+        }
+
         Mat traj_img(int((y_max - y_min)/resolution), int((x_max - x_min)/resolution), CV_8UC3, Scalar(0,0,0));
         
         double end_timestamp = cap.get(CAP_PROP_POS_MSEC)/1000. + video_ahead_of_rosbag - time_btwn_veh_and_latest_traj;
-        
-        if (cap.get(CAP_PROP_POS_MSEC)/1000. > 100){
-            break;
-        }
 
         for (int i=0; i<veh_names.size(); i++){
             string veh_name = veh_names[i];
             int start_ind = closest_ind(timestamps[veh_name], end_timestamp-traj_time_length);
             int end_ind = closest_ind(timestamps[veh_name], end_timestamp);
             for (int j=start_ind; j<end_ind; j++){
-                circle(traj_img, vicon_coord_to_top_down_img_plane_coord(trajs[veh_name][j]), 0.03/resolution, colors[i], 0.05/resolution);
+                circle(traj_img, vicon_coord_to_top_down_img_plane_coord(trajs[veh_name][j]), circle_radius/resolution, colors[i], circle_thickness/resolution);
             }
         }
 

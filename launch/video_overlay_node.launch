@@ -1,0 +1,10 @@
+<launch>
+    <arg name="config" default="4_hexes_parallel_swaps"/>
+    <!-- <arg name="config" default="4_hexes_perpendicular_swaps"/> -->
+    <arg name="homography_pts" default="security_cam_to_vicon_z1.5m"/>
+    <node name="video_overlay_node" pkg="video_overlay" type="video_overlay_node" output="screen">
+        <rosparam command="load" file="$(find video_overlay)/config/experiments/$(arg config).yaml"/>
+        <rosparam command="load" file="$(find video_overlay)/config/homography_pts/$(arg homography_pts).yaml"/>
+        <rosparam command="load" file="$(find video_overlay)/config/general_parameters.yaml"/>
+    </node> 
+</launch>

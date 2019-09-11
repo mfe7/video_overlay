@@ -1,0 +1,12 @@
+# [[[vicon_x, vicon_y], [camera_x, camera_y]], ...]
+# vicon pts MUST be double/float, camera pts MUST be int
+vicon_camera_pairs: [
+  [[-6.7,-1.6], [251, 528]],      # HX04 parallel swap
+  [[-0.97,1.47], [1578, 431]],    # HX05 parallel swap
+  [[-7.,1.5], [543, 260]],        # HX06 parallel swap
+  [[-0.96,-1.5], [1463, 818]],    # HX07 parallel swap
+  [[-1.93, -2.83], [1137, 992]],  # HX04 init hover
+  [[-4.02,-2.67], [637, 826]],    # HX05 init hover
+  [[-5.95,-2.62], [269, 699]],    # HX06 init hover
+  [[-7.96,-2.58], [18, 602]],     # HX07 init hover
+]

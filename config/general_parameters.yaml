@@ -1,0 +1,7 @@
+write_video: true
+have_homography_matrix: false
+click_pts_for_homography: false
+
+# ring w/ OD=2*circle_radius, ID=2*(circle_radius-circle_thickness)
+circle_radius: 0.03
+circle_thickness: 0.05

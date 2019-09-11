@@ -16,8 +16,10 @@ Outputs:
 Clone the repo, `catkin_make`, then:
 
 ```
-rosrun video_overlay video_overlay_node
+roslaunch video_overlay video_overlay_node.launch
 ```
+
+Update the args in `video_overlay_node.launch` to point to the correct yaml files (homography, config)
 
 If you don't have a homography matrix already, you should:
 - find a recognizable moment in your video & take a screenshot
@@ -26,6 +28,8 @@ If you don't have a homography matrix already, you should:
 ```
 rosrun video_overlay video_overlay_node <screenshot_filename>
 ```
-- Add the vicon and img coords to the list of pts used to compute H
+- Create a new `homography_....yaml` file with the vicon and img coords
+- Switch which yaml file is loaded in the launch file
+- Your homography matrix will be computed for you at the start of the script
 
 Contact: mfe@mit.edu
