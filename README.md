@@ -32,4 +32,9 @@ rosrun video_overlay video_overlay_node <screenshot_filename>
 - Switch which yaml file is loaded in the launch file
 - Your homography matrix will be computed for you at the start of the script
 
+The `outcpp.avi` file will be giant. You can compress it with ffmpeg (increase -crf to make file smaller):
+```
+ffmpeg -i outcpp.avi -crf 30 outcpp_small.avi
+```
+
 Contact: mfe@mit.edu
