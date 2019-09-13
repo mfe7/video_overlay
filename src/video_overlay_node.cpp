@@ -315,18 +315,21 @@ int main( int argc, char** argv )
 
 
     VideoCapture cap(input_video_filename);
+
     // Check if camera opened successfully
     if(!cap.isOpened()){
         cout << "Error opening video stream or file" << endl;
         return -1;
     }
 
+
     VideoWriter video;
     if (write_video){
         // Default resolution of the frame is obtained.The default resolution is system dependent. 
         int frame_width = cap.get(CV_CAP_PROP_FRAME_WIDTH); 
         int frame_height = cap.get(CV_CAP_PROP_FRAME_HEIGHT); 
-        video = VideoWriter(output_video_filename, CV_FOURCC('M','J','P','G'), 10, Size(frame_width,frame_height)); 
+        double input_fps = cap.get(CV_CAP_PROP_FPS);
+        video = VideoWriter(output_video_filename, CV_FOURCC('M','J','P','G'), input_fps, Size(frame_width,frame_height)); 
     }
     
     while(1){
@@ -373,8 +376,9 @@ int main( int argc, char** argv )
         // Display the resulting frame
         imshow( "Frame", finalImage );
 
-        if (write_video)
+        if (write_video){
             video.write(finalImage);
+        }
 
         // Press  ESC on keyboard to exit
         char c=(char)waitKey(25);
