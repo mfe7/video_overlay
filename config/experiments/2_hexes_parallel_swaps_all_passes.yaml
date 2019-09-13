@@ -1,0 +1,13 @@
+video_start_time: 0
+video_end_time: 120
+
+veh_names: ["HX04", "HX06"]
+bag_filename: "/home/mfe/ijrr_cadrl_results/two_hexes.bag"
+input_video_filename: "/home/mfe/Videos/first_day_cadrl_hexes/two_hexes.mp4"
+output_video_filename: "/home/mfe/acl_ws/src/video_overlay/2_hexes_parallel_swaps_all_passes_large.avi"
+
+traj_time_length: 15
+video_ahead_of_rosbag: 57
+time_btwn_veh_and_latest_traj: 0.5
+time_btwn_traj_pts: 0.2
+max_time_of_traj: 1000

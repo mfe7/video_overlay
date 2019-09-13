@@ -1,10 +1,10 @@
-video_start_time: 33
-video_end_time: 185
+video_start_time: 207
+video_end_time: 353
 
 veh_names: ["HX04", "HX05", "HX06", "HX07"]
 bag_filename: "/home/mfe/ijrr_cadrl_results/four_hexes_swap_and_square.bag"
 input_video_filename: "/home/mfe/Videos/first_day_cadrl_hexes/four_hexes_small.mp4"
-output_video_filename: "/home/mfe/acl_ws/src/video_overlay/4_hexes_parallel_swaps_all_passes_large.avi"
+output_video_filename: "/home/mfe/acl_ws/src/video_overlay/4_hexes_perpendicular_swaps_all_passes_large.avi"
 
 traj_time_length: 15
 video_ahead_of_rosbag: 9

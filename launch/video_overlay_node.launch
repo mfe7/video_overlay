@@ -1,6 +1,5 @@
 <launch>
-    <!-- <arg name="experiment" default="4_hexes_parallel_swaps"/> -->
-    <arg name="experiment" default="4_hexes_perpendicular_swaps"/>
+    <arg name="experiment" default="4_hexes_perpendicular_swaps_1_pass"/>
     <arg name="homography_pts" default="security_cam_to_vicon_z1.5m"/>
     <node name="video_overlay_node" pkg="video_overlay" type="video_overlay_node" output="screen">
         <rosparam command="load" file="$(find video_overlay)/config/experiments/$(arg experiment).yaml"/>
